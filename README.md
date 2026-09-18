@@ -1,10 +1,70 @@
-# Architecture & Implementation Reference
+Viewed user_flows.md:1-38
 
-This document outlines the architectural blueprints, structural design, and core computational patterns underpinning the platform. The system enforces a strict separation of concerns through Clean Architecture, enabling horizontal scalability, robust real-time synchronization, and decoupled domain logic.
+Aquí tienes el documento completo y estructurado. He ampliado la visión del producto para responder al "Por qué" (Why), he desglosado el "Qué" (What) explicando el flujo del chat y el sistema de consenso, y he incluido marcadores visuales `![...]` junto con sugerencias exactas de las capturas de pantalla que debes realizar en tu app de Flutter.
 
-## 1. System Architecture
+Mantiene el tono aséptico, técnico y directo de un Staff Engineer, demostrando el dominio del dominio del problema sin exponer la implementación algorítmica interna.
 
-The following directed graph illustrates the synchronous and asynchronous communication streams across the primary infrastructure components. 
+***
+
+# ComPiso: Algorithmic Co-Living Matchmaker
+
+ComPiso is a highly scalable, decoupled platform designed to optimize the process of finding compatible flatmates. Moving away from traditional classification boards, the system leverages deterministic psychometric vector analysis to compute mathematical compatibility before a human interaction even begins.
+
+## 1. The "Why": Problem Statement & Vision
+
+Traditional real estate and flat-sharing applications rely on unstructured text descriptions and shallow filtering (e.g., price, location). This creates massive friction, high rejection rates, and ultimately, incompatible living situations. 
+
+**The goal of ComPiso is to solve human compatibility through deterministic computation.**
+
+By quantifying behavioral traits (cleanliness, noise tolerance, socialization) into n-dimensional vectors, the system eliminates cognitive bias and information asymmetry. The platform does not simply display available rooms; it computes the mathematical probability of a harmonious coexistence. 
+
+## 2. The "What": Core Flows & Feature Set
+
+The platform orchestrates a multi-actor workflow spanning candidates, flat owners (Captains), and existing tenants.
+
+### 2.1. Vectorized Onboarding
+Users do not write free-text biographies to find a match. They complete a psychometric calibration process.
+*   **Mechanism:** 15 distinct lifestyle dimensions are quantified into a normalized `QuizVector` (values `0.0` to `1.0`) alongside boolean hard-constraints (smoking, pets).
+*   **UI Implementation:** Interactive sliders and binary toggles that map directly to the application layer's DTO payload.
+
+> 📸 **Sugerencia de Captura 1 (Onboarding):** *Toma una captura de la pantalla del Quiz en Flutter donde se aprecien los sliders (ej. "Nivel de limpieza", "Frecuencia de visitas"). Esto ilustra la interfaz de recolección de datos que alimenta el vector.*
+> 
+> `![Vectorized Onboarding](./docs/screenshots/01_quiz_vector.png)`
+
+### 2.2. Deterministic Discovery (Matchmaking)
+The discovery feed is not chronologically sorted; it is strictly prioritized by algorithmic affinity.
+*   **Mechanism:** Upon feed request, the backend retrieves the candidate's `QuizVector` and calculates the distance (linear absolute difference) against the `RequirementsVector` of every active flat. Hard constraints act as initial pre-filters, dropping completely incompatible nodes.
+*   **UI Implementation:** A dynamic feed rendering high-affinity matches via a computed percentage score and radar charts for dimension breakdown.
+
+> 📸 **Sugerencia de Captura 2 (Discovery Feed):** *Captura el "Dashboard" principal del candidato, destacando la tarjeta de un piso que muestre claramente el porcentaje de afinidad (ej. "87% Match") y su gráfica o desglose.*
+> 
+> `![Discovery Feed](./docs/screenshots/02_discovery_feed.png)`
+
+### 2.3. Asynchronous Consensus Protocol
+A flat is a shared ecosystem. ComPiso enforces a democratic consensus protocol before an applicant is granted communication privileges.
+*   **Mechanism:** When a candidate applies, the application transitions to a `PENDING` state. The system broadcasts a push notification to all existing flat members. The `RecruitmentService` requires a unanimous `True` vote from all tenants. A single `False` vote terminates the application (`REJECTED`). Unanimous approval triggers a `MATCH`.
+*   **UI Implementation:** A voting interface for existing tenants, rendering the candidate's vector diff alongside binary decision actions.
+
+> 📸 **Sugerencia de Captura 3 (Consensus Voting):** *Captura la pantalla del inquilino ("FlatMember") donde se le pide aceptar o rechazar a un candidato, mostrando el botón de decisión y el perfil del aspirante.*
+> 
+> `![Consensus Protocol](./docs/screenshots/03_consensus_voting.png)`
+
+### 2.4. Real-Time Secure Messaging (Post-Match)
+Chatting is a system privilege granted exclusively after a mathematical and human `MATCH`.
+*   **Mechanism:** Post-match, the system generates an inactive `Conversation` entity. Only when the Flat Captain explicitly initiates the chat does the WebSocket channel activate for bi-directional communication. This strict lifecycle prevents spam and protects tenant privacy.
+*   **UI Implementation:** Real-time chat interface driven by WebSockets, featuring connection state indicators and payload idempotency.
+
+> 📸 **Sugerencia de Captura 4 (WebSocket Chat):** *Captura la pantalla del chat interno ya habilitado entre el Capitán y el Candidato. Ideal si se visualiza un intercambio de mensajes fluido.*
+> 
+> `![Secure Messaging](./docs/screenshots/04_realtime_chat.png)`
+
+---
+
+## 3. The "How": System Architecture & Engineering
+
+The platform enforces a strict separation of concerns through Clean Architecture, enabling horizontal scalability, robust real-time synchronization, and isolated domain logic.
+
+### 3.1. Infrastructure Topology
 
 ```mermaid
 graph TD
@@ -26,37 +86,34 @@ graph TD
     DomainEngine -. "Abstracted Repositories" .-> PostgreSQL
 ```
 
-## 2. Project Structure (Clean Architecture)
+### 3.2. Clean Architecture Boundaries
 
-The backend strictly adheres to Clean Architecture layers. The `domain` layer remains entirely framework-agnostic, deferring all I/O operations, transport protocols, and data persistence to the `infrastructure` and `presentation` layers.
+The backend strictly adheres to Clean Architecture layers. The `domain` layer remains entirely framework-agnostic, deferring all I/O operations, transport protocols, and data persistence to the outer layers.
 
 ```text
 src/
 ├── application/                  # Application Services & Payload Transfer Objects
 │   ├── dtos/
-│   │   ├── calculate-affinity.dto.ts
-│   │   └── vote.dto.ts
-│   └── services/
-│       ├── affinity.service.ts   # Orchestration & mapping
-│       └── application.service.ts
+│   └── services/                 # Orchestration & mapping (Affinity, Chat, Recruitment)
 ├── domain/                       # Core Business Logic (Zero external dependencies)
-│   ├── entities/
-│   │   ├── quiz_vector.ts
-│   │   └── flat.ts
-│   ├── repositories/
-│   │   └── flat.repository.interface.ts
-│   └── use-cases/
-│       └── calculate-affinity.use-case.ts
-├── infrastructure/               # External adapters (TypeORM, DB drivers)
-│   └── database/
+│   ├── entities/                 # QuizVector, Flat, User, Conversation
+│   ├── repositories/             # Abstracted Data Contracts
+│   └── use-cases/                # Pure mathematical computation (CalculateAffinity)
+├── infrastructure/               # External adapters (TypeORM, PostgreSQL Drivers)
 └── presentation/                 # HTTP/WebSocket transport and routing
     ├── controllers/
-    │   ├── affinity.controller.ts
-    │   └── user.controller.ts
-    └── guards/
+    └── gateways/
 ```
 
-## 3. Core Interfaces & DTOs
+### 3.3. Technical Challenges Solved
+
+*   **High-Dimensional Matchmaking Optimization:** Resolving computational bottlenecking during candidate compatibility scoring. The distance calculation logic is isolated into pure memory operations within the domain layer. This prevents N+1 query latency against PostgreSQL and minimizes garbage collection overhead when running calculations iteratively over large datasets.
+*   **Architectural Boundary Enforcement:** Mitigating domain logic pollution via explicit inversion of control (IoC). The `src/domain` layer enforces a strict zero-dependency policy regarding NestJS HTTP decorators or TypeORM annotations. Data mutation relies strictly on abstracted interfaces, safeguarding core business rules against underlying framework modifications.
+*   **Distributed State Synchronization & Concurrency:** Handling distributed state inconsistencies between the Flutter client and the NestJS cluster. Bi-directional WebSocket communication ensures real-time event broadcasting (chat payloads, match status) while avoiding race conditions during the asynchronous voting consensus. This maintains idempotent state updates across clients and eliminates resource-intensive HTTP polling mechanisms.
+
+---
+
+## 4. Core Interfaces & DTOs
 
 The following snippets demonstrate strict typing and validation perimeters. Internal implementation algorithms are abstracted to preserve security and proprietary logic.
 
@@ -84,27 +141,16 @@ export class CalculateAffinityUseCase {
 import { IsOptional, IsString, IsArray, IsObject } from 'class-validator';
 
 export class UpdateUserDto {
-  @IsOptional()
-  @IsString()
+  @IsOptional() @IsString()
   readonly fullName?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional() @IsString()
   readonly bio?: string;
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
+  @IsOptional() @IsArray() @IsString({ each: true })
   readonly galleryPhotos?: string[];
 
-  @IsOptional()
-  @IsObject()
-  readonly quizVector?: Record<string, any>;
+  @IsOptional() @IsObject()
+  readonly quizVector?: Record<string, any>; // N-Dimensional psychometric payload
 }
 ```
-
-## 4. Technical Challenges Solved
-
-*   **High-Dimensional Matchmaking Optimization:** Resolving computational bottlenecking during candidate compatibility scoring. The distance calculation logic (`QuizVector` parsing and Euclidean/absolute difference summation) is isolated into pure memory operations within the domain layer. This prevents N+1 query latency against PostgreSQL and minimizes garbage collection overhead when running calculations iteratively over large candidate datasets.
-*   **Architectural Boundary Enforcement:** Mitigating domain logic pollution via explicit inversion of control (IoC). The `src/domain` layer enforces a strict zero-dependency policy regarding NestJS HTTP decorators or TypeORM annotations. Data mutation relies strictly on abstracted interfaces (`flat.repository.interface.ts`), safeguarding core business rules against underlying framework modifications or database migrations.
-*   **State Synchronization over Concurrent WebSockets:** Handling distributed state inconsistencies between the Flutter client and the NestJS cluster. Bi-directional WebSocket communication ensures real-time event broadcasting while avoiding race conditions. This maintains idempotent state updates across clients and eliminates resource-intensive HTTP polling mechanisms from the mobile presentation tier.
