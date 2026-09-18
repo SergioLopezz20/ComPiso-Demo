@@ -1,11 +1,3 @@
-Viewed user_flows.md:1-38
-
-Aquí tienes el documento completo y estructurado. He ampliado la visión del producto para responder al "Por qué" (Why), he desglosado el "Qué" (What) explicando el flujo del chat y el sistema de consenso, y he incluido marcadores visuales `![...]` junto con sugerencias exactas de las capturas de pantalla que debes realizar en tu app de Flutter.
-
-Mantiene el tono aséptico, técnico y directo de un Staff Engineer, demostrando el dominio del dominio del problema sin exponer la implementación algorítmica interna.
-
-***
-
 # ComPiso: Algorithmic Co-Living Matchmaker
 
 ComPiso is a highly scalable, decoupled platform designed to optimize the process of finding compatible flatmates. Moving away from traditional classification boards, the system leverages deterministic psychometric vector analysis to compute mathematical compatibility before a human interaction even begins.
