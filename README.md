@@ -116,3 +116,58 @@ src/
 │   ├── entities/                 # QuizVector, Flat, User, Conversation
 │   ├── repositories/             # Abstracted Data Contracts
 │   └── use-cases/                # Pure mathematical computation (CalculateAffinity)
+├── infrastructure/               # External adapters (TypeORM, PostgreSQL Drivers)
+└── presentation/                 # HTTP/WebSocket transport and routing
+    ├── controllers/
+    └── gateways/
+```
+
+### 3.3. Technical Challenges Solved
+
+*   **High-Dimensional Matchmaking Optimization:** Resolving computational bottlenecking during candidate compatibility scoring. The distance calculation logic is isolated into pure memory operations within the domain layer. This prevents N+1 query latency against PostgreSQL and minimizes garbage collection overhead when running calculations iteratively over large datasets.
+*   **Architectural Boundary Enforcement:** Mitigating domain logic pollution via explicit inversion of control (IoC). The `src/domain` layer enforces a strict zero-dependency policy regarding NestJS HTTP decorators or TypeORM annotations. Data mutation relies strictly on abstracted interfaces, safeguarding core business rules against underlying framework modifications.
+*   **Distributed State Synchronization & Concurrency:** Handling distributed state inconsistencies between the Flutter client and the NestJS cluster. Bi-directional WebSocket communication ensures real-time event broadcasting (chat payloads, match status) while avoiding race conditions during the asynchronous voting consensus. This maintains idempotent state updates across clients and eliminates resource-intensive HTTP polling mechanisms.
+
+---
+
+## 4. Core Interfaces & DTOs
+
+The following snippets demonstrate strict typing and validation perimeters. Internal implementation algorithms are abstracted to preserve security and proprietary logic.
+
+**Distance Calculation Signature (Domain Layer):**
+```typescript
+// src/domain/use-cases/calculate-affinity.use-case.ts
+import { Injectable } from '@nestjs/common';
+import { QuizVector } from '../entities/quiz_vector';
+
+@Injectable()
+export class CalculateAffinityUseCase {
+  /**
+   * Computes mathematical compatibility distance between candidate and flat requirements.
+   * Execution is bounded purely to memory; completely independent of the data access layer.
+   */
+  public execute(candidateVector: QuizVector, flatRequirements: QuizVector): number;
+  
+  private parseValue(val: any): number;
+}
+```
+
+**Profile Management DTO (Presentation / Application Layer):**
+```typescript
+// src/presentation/controllers/user.controller.ts
+import { IsOptional, IsString, IsArray, IsObject } from 'class-validator';
+
+export class UpdateUserDto {
+  @IsOptional() @IsString()
+  readonly fullName?: string;
+
+  @IsOptional() @IsString()
+  readonly bio?: string;
+
+  @IsOptional() @IsArray() @IsString({ each: true })
+  readonly galleryPhotos?: string[];
+
+  @IsOptional() @IsObject()
+  readonly quizVector?: Record<string, any>; // N-Dimensional psychometric payload
+}
+```
