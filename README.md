@@ -19,36 +19,39 @@ Users do not write free-text biographies to find a match. They complete a psycho
 *   **Mechanism:** 15 distinct lifestyle dimensions are quantified into a normalized `QuizVector` (values `0.0` to `1.0`) alongside boolean hard-constraints (smoking, pets).
 *   **UI Implementation:** Interactive sliders and binary toggles that map directly to the application layer's DTO payload.
 
-> 📸 **Sugerencia de Captura 1 (Onboarding):** *Toma una captura de la pantalla del Quiz en Flutter donde se aprecien los sliders (ej. "Nivel de limpieza", "Frecuencia de visitas"). Esto ilustra la interfaz de recolección de datos que alimenta el vector.*
-> 
-> `![Vectorized Onboarding](./docs/screenshots/01_quiz_vector.png)`
+
+![Login Page]<img width="316" height="702" alt="image" src="https://github.com/user-attachments/assets/f3970880-f32f-4f0d-a556-65619ea3d71f" />
+![Afinity Test]<img width="316" height="702" alt="image" src="https://github.com/user-attachments/assets/0d44662f-40fd-4d4c-80f4-ba3ceb7ea72e" />
+![Map]<img width="316" height="702" alt="image" src="https://github.com/user-attachments/assets/e52b3906-331b-4d8b-af7d-507d1e09e3a6" />
+![List]<img width="316" height="702" alt="image" src="https://github.com/user-attachments/assets/0e86ccff-4397-405c-b7f1-b31c9a69e228" />
+
+
 
 ### 2.2. Deterministic Discovery (Matchmaking)
 The discovery feed is not chronologically sorted; it is strictly prioritized by algorithmic affinity.
 *   **Mechanism:** Upon feed request, the backend retrieves the candidate's `QuizVector` and calculates the distance (linear absolute difference) against the `RequirementsVector` of every active flat. Hard constraints act as initial pre-filters, dropping completely incompatible nodes.
 *   **UI Implementation:** A dynamic feed rendering high-affinity matches via a computed percentage score and radar charts for dimension breakdown.
 
-> 📸 **Sugerencia de Captura 2 (Discovery Feed):** *Captura el "Dashboard" principal del candidato, destacando la tarjeta de un piso que muestre claramente el porcentaje de afinidad (ej. "87% Match") y su gráfica o desglose.*
-> 
-> `![Discovery Feed](./docs/screenshots/02_discovery_feed.png)`
+![Discovery Feed]<img width="322" height="692" alt="image" src="https://github.com/user-attachments/assets/8e8ba0c9-729e-4f99-acde-820b1f77266a" />
+
+
 
 ### 2.3. Asynchronous Consensus Protocol
 A flat is a shared ecosystem. ComPiso enforces a democratic consensus protocol before an applicant is granted communication privileges.
 *   **Mechanism:** When a candidate applies, the application transitions to a `PENDING` state. The system broadcasts a push notification to all existing flat members. The `RecruitmentService` requires a unanimous `True` vote from all tenants. A single `False` vote terminates the application (`REJECTED`). Unanimous approval triggers a `MATCH`.
 *   **UI Implementation:** A voting interface for existing tenants, rendering the candidate's vector diff alongside binary decision actions.
 
-> 📸 **Sugerencia de Captura 3 (Consensus Voting):** *Captura la pantalla del inquilino ("FlatMember") donde se le pide aceptar o rechazar a un candidato, mostrando el botón de decisión y el perfil del aspirante.*
-> 
-> `![Consensus Protocol](./docs/screenshots/03_consensus_voting.png)`
+[Candidate's profile]<img width="316" height="696" alt="image" src="https://github.com/user-attachments/assets/5685722c-2dc3-417e-b18c-88f92947f0db" />
 
 ### 2.4. Real-Time Secure Messaging (Post-Match)
 Chatting is a system privilege granted exclusively after a mathematical and human `MATCH`.
 *   **Mechanism:** Post-match, the system generates an inactive `Conversation` entity. Only when the Flat Captain explicitly initiates the chat does the WebSocket channel activate for bi-directional communication. This strict lifecycle prevents spam and protects tenant privacy.
 *   **UI Implementation:** Real-time chat interface driven by WebSockets, featuring connection state indicators and payload idempotency.
 
-> 📸 **Sugerencia de Captura 4 (WebSocket Chat):** *Captura la pantalla del chat interno ya habilitado entre el Capitán y el Candidato. Ideal si se visualiza un intercambio de mensajes fluido.*
-> 
-> `![Secure Messaging](./docs/screenshots/04_realtime_chat.png)`
+[Match]<img width="315" height="685" alt="image" src="https://github.com/user-attachments/assets/861a06b0-d516-42b7-b9dc-5dfb3c7a5802" />
+
+[Secure Messaging]<img width="315" height="693" alt="image" src="https://github.com/user-attachments/assets/cdf1f503-a5dd-47d0-8347-4d55d1911625" />
+
 
 ---
 
